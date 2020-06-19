@@ -17,7 +17,7 @@ con <- dbConnect( drv, dbname="aact", host="aact-db.ctti-clinicaltrials.org",
                   user="anabellabuckvar", password="muser2020" )
 
 # get conditions
-aact_conditions <- dbGetQuery(con, "select * from conditions" )
+aact_conditions <- dbGetQuery( con, "select * from conditions" )
 
 # subset to pompe
 ix_conditions <- grepl( "pompe", aact_conditions$downcase_name )
@@ -26,6 +26,17 @@ dim( aact_conditions[ix_conditions,] )
 # preview
 head( aact_conditions[ix_conditions,] )
 
-aact_elegibilities <- dbGetQuery( con, "select * from eligibilities" )
+aact_elegibilities <- dbGetQuery( con, "select * from eligibilities fetch first 100000 rows only" )
 
+ix_pompe <- aact_elegibilities$nct_id %in% aact_conditions$nct_id[ix_conditions]
+
+pompe_subset <- aact_elegibilities[ix_pompe,]
+dim( pompe_subset )
+
+criteria <- list()
+for( i in 1:dim( pompe_subset )[1] ){
+  x <- trimws( unlist( strsplit( pompe_subset$criteria[i], "\n" ) ) )
+  criteria[[pompe_subset$nct_id[i]]] <- x[lapply( x, nchar ) > 0]
+}
+head(pompe_subset)
 ```

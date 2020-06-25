@@ -10,11 +10,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(RPostgreSQL)
+library(tidyverse)
 
 drv <- dbDriver( "PostgreSQL")
 con <- dbConnect( drv, dbname="aact", host="aact-db.ctti-clinicaltrials.org",
                   port=5432, 
-                  user="anabellabuckvar", password="muser2020" )
+                  user="apoorvadas6", password="MuserNM20" )
 
 # get conditions
 aact_conditions <- dbGetQuery( con, "select * from conditions" )
@@ -38,8 +39,31 @@ str(pompe_subset)
 
 criteria <- list()
 for( i in 1:dim( pompe_subset )[1] ){
-  x <- trimws( unlist( strsplit( pompe_subset$criteria[i], "\n" ) ) )
+  x <- trimws( unlist( strsplit(pompe_subset$criteria[i], "\n") ) )
   criteria[[pompe_subset$nct_id[i]]] <- x[lapply( x, nchar ) > 0]
+  #here i was trying to split the list in two with the split function...i tried to locate where "exclusion criteria" 
+  #was in the list, but when i tried %in% it said the phrase exclusion criteria wasn't in the criteria list at all which makes no sense
+  #lapply(all.criteria, function(x), split(x,x$criteria))
+  split(criteria, "Exclusion Criteria:")
 }
-head(criteria, n=15)
+
+#this is the text pasing part according to the lab i think everything is right except for the tibble line but i could be wrong
+text_df <- tibble(line = 1:10, text = criteria)
+criteria_words <- criteria %>%
+  unnest_tokens(word, criteria)
+criteria_words %>%
+   count(word) %>%
+   arrange(desc(n))
+(criteria_words)
+
+#here is where i thought we could just do another list for the exclusion criteria but even though its literally the same this portion doesn't compile
+#ecriteria <- list()
+#for( j in 1:dim( pompe_subset )[1] ){
+  #ecriteria <- as.character(ecriteria)
+  #y <- trimws( unlist( strsplit(pompe_subset$ecriteria[j], "\n") ) )
+  #ecriteria[[pompe_subset$nct_id[j]]] <- y[lapply( y, nchar ) > 0]
+#}
+head(criteria, n=3)
+
 ```
+

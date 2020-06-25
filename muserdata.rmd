@@ -5,33 +5,25 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
 ```
 
 ```{r}
 library(RPostgreSQL)
-library(tidyverse)
 
 drv <- dbDriver( "PostgreSQL")
 con <- dbConnect( drv, dbname="aact", host="aact-db.ctti-clinicaltrials.org",
                   port=5432, 
                   user="apoorvadas6", password="MuserNM20" )
-
 # get conditions
 aact_conditions <- dbGetQuery( con, "select * from conditions" )
-
 # subset to pompe
 ix_conditions <- grepl( "pompe", aact_conditions$downcase_name )
 dim( aact_conditions[ix_conditions,] )
 names(aact_conditions[ix_conditions,])
-
 # preview
 head( aact_conditions[ix_conditions,] )
-
 aact_elegibilities <- dbGetQuery( con, "select * from eligibilities fetch first 150000 rows only" )
-
 ix_pompe <- aact_elegibilities$nct_id %in% aact_conditions$nct_id[ix_conditions]
-
 pompe_subset <- aact_elegibilities[ix_pompe,]
 dim( pompe_subset )
 names(pompe_subset)
@@ -41,22 +33,13 @@ criteria <- list()
 for( i in 1:dim( pompe_subset )[1] ){
   x <- trimws( unlist( strsplit(pompe_subset$criteria[i], "\n") ) )
   criteria[[pompe_subset$nct_id[i]]] <- x[lapply( x, nchar ) > 0]
-  #here i was trying to split the list in two with the split function...i tried to locate where "exclusion criteria" 
-  #was in the list, but when i tried %in% it said the phrase exclusion criteria wasn't in the criteria list at all which makes no sense
+  #tried to split the criteria into sublists with split function - says phrase "exclusion criteria" is not in criteria
   #lapply(all.criteria, function(x), split(x,x$criteria))
-  split(criteria, "Exclusion Criteria:")
+  #ex <- which(criteria == "Exclusion Criteria:") 
+  #split(criteria, pompe_subset[ex])
 }
 
-#this is the text pasing part according to the lab i think everything is right except for the tibble line but i could be wrong
-text_df <- tibble(line = 1:10, text = criteria)
-criteria_words <- criteria %>%
-  unnest_tokens(word, criteria)
-criteria_words %>%
-   count(word) %>%
-   arrange(desc(n))
-(criteria_words)
-
-#here is where i thought we could just do another list for the exclusion criteria but even though its literally the same this portion doesn't compile
+#separate list for the exclusion criteria doesn't compile - ecriteria doesnt exist
 #ecriteria <- list()
 #for( j in 1:dim( pompe_subset )[1] ){
   #ecriteria <- as.character(ecriteria)
@@ -64,6 +47,4 @@ criteria_words %>%
   #ecriteria[[pompe_subset$nct_id[j]]] <- y[lapply( y, nchar ) > 0]
 #}
 head(criteria, n=3)
-
 ```
-
